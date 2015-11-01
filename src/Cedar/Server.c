@@ -1628,8 +1628,12 @@ void GetServerCapsMain(SERVER *s, CAPSLIST *t)
 
 	if (IsBridgeSupported())
 	{
-		// Tun / tap device is available (only Linux)
-		AddCapsBool(t, "b_tap_supported", GetOsInfo()->OsType == OSTYPE_LINUX ? true : false);
+		// Tun / tap device is available (only Linux and FreeBSD)
+		#if	defined(UNIX_LINUX) || defined(UNIX_FREEBSD)
+			AddCapsBool(t, "b_tap_supported", true);
+		#else
+			AddCapsBool(t, "b_tap_supported", false);
+		#endif
 	}
 
 	// Cascade connction

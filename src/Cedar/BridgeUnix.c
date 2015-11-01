@@ -1493,6 +1493,23 @@ ETH *OpenEthBpf(char *name, bool local, bool tapmode, char *tapaddr)
 }
 #endif // BRIDGE_BPF
 
+#ifdef UNIX_FREEBSD
+// Open Ethernet adapter (FreeBSD)
+ETH *OpenEthFreeBSD(char *name, bool local, bool tapmode, char *tapaddr)
+{
+	if (!tapmode){
+		#ifdef BRIDGE_BPF
+			//Use BridgeBFP as fallback on bridge mode
+			return OpenEthBpf(name,local,tapmode,tapaddr);
+		#else
+			return NULL;
+		#endif
+	}
+	//TODO: Implementation, reference from linux tapmode
+	return NULL;
+}
+#endif
+
 // Open Ethernet adapter
 ETH *OpenEth(char *name, bool local, bool tapmode, char *tapaddr)
 {
@@ -1500,6 +1517,8 @@ ETH *OpenEth(char *name, bool local, bool tapmode, char *tapaddr)
 
 #if		defined(UNIX_LINUX)
 	ret = OpenEthLinux(name, local, tapmode, tapaddr);
+#elif	defined(UNIX_FREEBSD)
+	ret = OpenEthFreeBSD(name, local, tapmode, tapaddr);
 #elif	defined(UNIX_SOLARIS)
 	ret = OpenEthSolaris(name, local, tapmode, tapaddr);
 #elif	defined(BRIDGE_PCAP)
