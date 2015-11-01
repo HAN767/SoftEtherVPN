@@ -451,7 +451,7 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 	eth_name[15] = 0;
 
 	// Open the tun / tap
-#ifndef	UNIX_MACOS
+#if	!defined(UNIX_BSD) && !defined(UNIX_MACOS)
 	if (GetOsInfo()->OsType == OSTYPE_LINUX)
 	{
 		// Linux
@@ -538,6 +538,17 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 	}
 
 #else	// UNIX_LINUX
+#ifdef  UNIX_BSD
+	// MAC address setting
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s != -1)
+	{
+		//TODO: Modify from Mac
+		//TODO: Set MTU 
+		//TODO: Set Interface name
+		close(s);
+	}
+#endif
 #ifdef	UNIX_MACOS
 	// MAC address setting
 	s = socket(AF_INET, SOCK_DGRAM, 0);
