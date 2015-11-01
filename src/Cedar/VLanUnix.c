@@ -541,8 +541,17 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 #ifdef  UNIX_FREEBSD
 	// MAC address setting
 	
+	/*TODO
+		1) Disconnection problem
+			In the commit of d856c30ff4febf55fe70e0445510bda6146220a5, the TAP can be created but will be disconnected immediately
+			The issue may araised by the interface name, tap0 may not be accepted?
+			
+		2) Custom interface name
+			In FreeBSD, the ifname of an TAP device can be changed, just as the tap_<custom_name> used in SoftEther
+	*/
+	
 	/*
-	TODO: Modify from Mac, we don't need socket but just a TAP fd instead
+	Modified from Mac, we don't need socket but just a TAP fd instead
 	
 	Rewrite with reference from https://www.freebsd.org/cgi/man.cgi?query=netintro&sektion=4&apropos=0
 	
@@ -550,15 +559,15 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 	Tap on BSD https://github.com/nizox/tapcfg/blob/master/src/lib/tapcfg_unix_bsd.h
 	*/
 	
-	char *freensd_eth_name;
+	char *freebsd_eth_name;
 	
 	// Set the device name
-	freensd_eth_name = tap_macos_name + strlen(TAP_MACOS_DIR);
+	freebsd_eth_name = tap_macos_name + strlen(TAP_MACOS_DIR);
 
 	if (mac_address != NULL)
 	{
 		Zero(&ifr, sizeof(ifr));
-		StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), freensd_eth_name);
+		StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), freebsd_eth_name);
 		ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
 		ifr.ifr_addr.sa_family = AF_LINK;
 		Copy(&ifr.ifr_addr.sa_data, mac_address, ETHER_ADDR_LEN);
@@ -567,7 +576,7 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 
 	//TODO: Set Interface to UP
 	Zero(&ifr, sizeof(ifr));
-	StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), freensd_eth_name);
+	StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), freebsd_eth_name);
 	ioctl(fd, SIOCGIFFLAGS, &ifr);
 
 	ifr.ifr_flags |= IFF_UP;
