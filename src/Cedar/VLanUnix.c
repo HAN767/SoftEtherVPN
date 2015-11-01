@@ -126,7 +126,7 @@
 #include <errno.h>
 #include <Mayaqua/Mayaqua.h>
 #include <Cedar/Cedar.h>
-#ifdef	UNIX_MACOS
+#if	defined(UNIX_FREEBSD) || defined(UNIX_MACOS)
 #include <net/ethernet.h>
 #endif
 
@@ -433,7 +433,7 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 	struct sockaddr sa;
 	char *tap_name = TAP_FILENAME_1;
 	int s;
-#ifdef	UNIX_MACOS
+#if	defined(UNIX_FREEBSD) || defined(UNIX_MACOS)
 	char tap_macos_name[256] = TAP_MACOS_DIR TAP_MACOS_FILENAME;
 #endif
 	// Validate arguments
@@ -451,7 +451,7 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 	eth_name[15] = 0;
 
 	// Open the tun / tap
-#if	!defined(UNIX_BSD) && !defined(UNIX_MACOS)
+#if	!defined(UNIX_FREEBSD) && !defined(UNIX_MACOS)
 	if (GetOsInfo()->OsType == OSTYPE_LINUX)
 	{
 		// Linux
@@ -478,7 +478,7 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 		}
 		tap_name = TAP_FILENAME_2;
 	}
-#else	// UNIX_MACOS
+#else	// UNIX_FREEBSD or UNIX_MACOS 
 	{
 		int i;
 		fd = -1;
@@ -538,16 +538,43 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 	}
 
 #else	// UNIX_LINUX
-#ifdef  UNIX_BSD
+#ifdef  UNIX_FREEBSD
 	// MAC address setting
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s != -1)
+	
+	/*
+	TODO: Modify from Mac, we don't need socket but just a TAP fd instead
+	
+	Rewrite with reference from https://www.freebsd.org/cgi/man.cgi?query=netintro&sektion=4&apropos=0
+	
+	TapCfg is a good example for reference as well https://github.com/nizox/tapcfg
+	Tap on BSD https://github.com/nizox/tapcfg/blob/master/src/lib/tapcfg_unix_bsd.h
+	*/
+	
+	char *freensd_eth_name;
+	
+	// Set the device name
+	freensd_eth_name = tap_macos_name + strlen(TAP_MACOS_DIR);
+
+	if (mac_address != NULL)
 	{
-		//TODO: Modify from Mac
-		//TODO: Set MTU 
-		//TODO: Set Interface name
-		close(s);
+		Zero(&ifr, sizeof(ifr));
+		StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), freensd_eth_name);
+		ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
+		ifr.ifr_addr.sa_family = AF_LINK;
+		Copy(&ifr.ifr_addr.sa_data, mac_address, ETHER_ADDR_LEN);
+		ioctl(fd, SIOCSIFLLADDR, &ifr);
 	}
+
+	//TODO: Set Interface to UP
+	Zero(&ifr, sizeof(ifr));
+	StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), freensd_eth_name);
+	ioctl(fd, SIOCGIFFLAGS, &ifr);
+
+	ifr.ifr_flags |= IFF_UP;
+	ioctl(fd, SIOCSIFFLAGS, &ifr);
+		
+		
+	
 #endif
 #ifdef	UNIX_MACOS
 	// MAC address setting

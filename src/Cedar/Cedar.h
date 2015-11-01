@@ -744,7 +744,7 @@
 
 #define	TAP_FILENAME_1				"/dev/net/tun"
 #define	TAP_FILENAME_2				"/dev/tun"
-#if	defined(UNIX_BSD) || defined(UNIX_MACOS)
+#if	defined(UNIX_FREEBSD) || defined(UNIX_MACOS)
 #ifdef	NO_VLAN
 #define	TAP_MACOS_FILENAME			"/dev/tap0"
 #else	// NO_VLAN
