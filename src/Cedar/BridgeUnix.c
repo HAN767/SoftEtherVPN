@@ -1506,7 +1506,24 @@ ETH *OpenEthFreeBSD(char *name, bool local, bool tapmode, char *tapaddr)
 		#endif
 	}
 	//TODO: Implementation, reference from linux tapmode
-	return NULL;
+	
+	// In tap mode
+	VLAN *v = NewTap(name, tapaddr);
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	ETH *e;
+	e = ZeroMalloc(sizeof(ETH));
+	e->Name = CopyStr(name);
+	e->Title = CopyStr(name);
+	e->Cancel = VLanGetCancel(v);
+	e->IfIndex = 0;
+	e->Socket = INVALID_SOCKET;
+	e->Tap = v;
+	return e;
+	
 }
 #endif
 
